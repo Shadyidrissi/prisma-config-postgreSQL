@@ -20,15 +20,15 @@ app.get('/all_users', async (req, res) => {
     res.status(500).json({ error: "An error occurred while fetching users" });
   }
 });
+
 app.get('/user/:id', async (req, res) => {
   const id = parseInt(req.params.id, 10); // Convert `id` to a number if it's an integer
   console.log("User ID:", id);
 
   try {
     const data = await prisma.user.findMany({
-      where: {
-        id: id, // Use the scalar value directly
-      },
+      where: {id: id},
+      include: { posts: true }, 
     });
 
     if (data.length === 0) {
@@ -124,7 +124,7 @@ app.post('/new_user', async (req, res) => {
 // API لإضافة مستخدم جديد
 app.post('/new_post', async (req, res) => {
   try {
-    const { title, content ,userId} = req.body;
+    const { title, content, userId } = req.body;
 
     // التحقق من البيانات المرسلة
     if (!title || !content) {
@@ -139,7 +139,7 @@ app.post('/new_post', async (req, res) => {
       data: {
         title: title,
         content: content,
-        userId : userId
+        userId: userId
       },
     });
 
@@ -150,6 +150,63 @@ app.post('/new_post', async (req, res) => {
     });
   } catch (error) {
     console.error("Error creating user:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+app.put('/update_post/:id', async (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10); // Parse the post ID
+    const { title, content, userId } = req.body; // Extract data from the request body
+
+    // Check if the post exists
+    const existingPost = await prisma.post.findUnique({
+      where: { id: id },
+    });
+
+    if (!existingPost) {
+      return res.status(404).json({ error: "Post not found" });
+    }
+
+    // Update the post in the database
+    const updatedPost = await prisma.post.update({
+      where: { id: id },
+      data: {
+        title: title,
+        content: content,
+        userId: userId,
+      },
+    });
+
+    // Respond with the updated post data
+    res.status(200).json({
+      message: "Post updated successfully",
+      updatedPost: updatedPost,
+    });
+  } catch (error) {
+    console.error("Error updating post:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+
+
+app.delete('/delete_post/:id', async (req, res) => {
+  try {
+    const id = parseInt(req.params.id, 10);
+
+    const data = await prisma.post.delete({
+      where: {
+        id:id
+      },
+    });
+
+    // استجابة مع بيانات المستخدم الذي تم إنشاؤه
+    res.status(200).json({
+      message: "Post delete successfully",
+      dataCreate: data,
+    });
+  } catch (error) {
+    console.error("Error deleteing post:", error);
     res.status(500).json({ error: error.message });
   }
 });
