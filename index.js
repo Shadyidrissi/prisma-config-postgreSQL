@@ -43,6 +43,47 @@ app.get('/user/:id', async (req, res) => {
   }
 });
 
+app.delete('/delete_user/:id', async (req, res) => {
+  const id = parseInt(req.params.id, 10); // Convert `id` to a number if it's an integer
+  // console.log("User ID:", id);
+
+  try {
+    const data = await prisma.user.delete({
+      where: {
+        id: id, // Use the scalar value directly
+      },
+    });
+
+    if (data.length === 0) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    console.log("Fetched user:", data);
+    res.json(data);
+  } catch (error) {
+    console.error("Error deleting user:", error);
+    res.status(500).json({ error: "An error occurred while fetching the user" });
+  }
+});
+
+app.delete('/delete_users', async (req, res) => {
+  const id = parseInt(req.params.id, 10); // Convert `id` to a number if it's an integer
+
+  try {
+    const data = await prisma.user.deleteMany();
+
+    if (data.length === 0) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    console.log("Fetched user:", data);
+    res.json(data);
+  } catch (error) {
+    console.error("Error deleting user:", error);
+    res.status(500).json({ error: "An error occurred while fetching the user" });
+  }
+});
+
 
 // API لإضافة مستخدم جديد
 app.post('/new_user', async (req, res) => {
@@ -75,6 +116,45 @@ app.post('/new_user', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+
+
+// POST
+
+// API لإضافة مستخدم جديد
+app.post('/new_post', async (req, res) => {
+  try {
+    const { title, content ,userId} = req.body;
+
+    // التحقق من البيانات المرسلة
+    if (!title || !content) {
+      return res.status(400).json({ error: "title and content are required" });
+    }
+
+    // Log the data to make sure it's being passed correctly
+    console.log(`Creating user with title: ${title}, content: ${content}`);
+
+    // Await the result of the prisma user creation
+    const data = await prisma.post.create({
+      data: {
+        title: title,
+        content: content,
+        userId : userId
+      },
+    });
+
+    // استجابة مع بيانات المستخدم الذي تم إنشاؤه
+    res.status(200).json({
+      message: "User created successfully",
+      dataCreate: data,
+    });
+  } catch (error) {
+    console.error("Error creating user:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+
 
 // تشغيل الخادم
 app.listen(port, () => {
